@@ -3,434 +3,399 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>TripLog — 우리의 여행 기록</title>
+<title>TripLog - 우리의 여행 기록</title>
 
-<!-- Leaflet + Geocoder -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"/>
-<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-
+<!-- 폰트 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
+
+<!-- Leaflet & Geocoder -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
 <style>
 :root{
-  --ka-sky:#9ad7f0; --ka-blue:#0e6eb8; --ink:#183046;
-  --card:#ffffff; --glass:rgba(255,255,255,.92); --gold:#cdbf8e;
-  --accent:#ff7a00; --accent2:#ffd21f; --ok:#1aa36a;
+  --ka-sky:#9ad7f0;   /* 하늘색 */
+  --ka-blue:#0e6eb8;  /* 대한항공 느낌 블루 */
+  --ink:#183046;
+  --card:#ffffff;
+  --glass: rgba(255,255,255,.92);
 }
 *{box-sizing:border-box}
-html,body{height:100%;margin:0;background:#f3f9ff;color:var(--ink);font-family:"Noto Sans KR",-apple-system,BlinkMacSystemFont,system-ui,Segoe UI,Arial,sans-serif}
-.btn{padding:.85rem 1rem;border-radius:12px;border:1px solid #b9ddf4;background:linear-gradient(180deg,#f7fcff,#e7f5ff);color:var(--ka-blue);font-weight:700;cursor:pointer;box-shadow:0 6px 14px rgba(14,110,184,.12)}
+html,body{height:100%;margin:0;font-family:"Noto Sans KR",system-ui,-apple-system,sans-serif;color:var(--ink);background:#f3f9ff}
+
+/* 공통 버튼 */
+.btn{
+  padding:.8rem 1rem;border-radius:12px;border:1px solid #b9ddf4;
+  background:linear-gradient(180deg,#f7fcff,#e7f5ff);color:var(--ka-blue);
+  font-weight:700;cursor:pointer;box-shadow:0 6px 14px rgba(14,110,184,.12)
+}
+.btn:active{transform:translateY(1px)}
 .btnPrimary{background:var(--ka-blue);color:#fff;border:none}
-.btnWarn{background:var(--accent);color:#fff;border:none}
-.btnGhost{background:#fff;color:var(--ink);border:1px solid #eaeef5}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-#screen-preflight,#screen-map{height:100%;display:none}
-#screen-preflight.active,#screen-map.active{display:block}
-#header{position:relative;z-index:5;padding:10px 16px;background:linear-gradient(135deg,var(--ka-sky),#dff3fb);border-bottom:1px solid #d3ecfa;box-shadow:0 6px 18px rgba(14,110,184,.18);display:flex;align-items:center;justify-content:space-between}
+
+/* 화면 컨테이너 */
+#screen-preflight, #screen-map{height:100%;display:none}
+#screen-preflight.active, #screen-map.active{display:block}
+
+/* 상단 헤더 */
+#header{
+  position:relative;z-index:5;padding:10px 16px;background:linear-gradient(135deg,var(--ka-sky),#dff3fb);
+  border-bottom:1px solid #d3ecfa;box-shadow:0 6px 18px rgba(14,110,184,.18)
+}
 #title{display:flex;gap:10px;align-items:center}
-#logoBadge{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#fff;border:1px solid #e6f3fb;box-shadow:0 3px 10px rgba(0,0,0,.06);font-size:18px}
+#logoBadge{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#fff;border:1px solid #e6f3fb;box-shadow:0 3px 10px rgba(0,0,0,.06);font-size:20px}
 #title h1{margin:0;font-size:18px;color:var(--ka-blue);line-height:1}
 #title p{margin:2px 0 0;font-size:12px;opacity:.8}
-#userChip{display:flex;gap:8px;align-items:center;background:#ffffffaa;border:1px solid #e6eef8;border-radius:999px;padding:8px 12px;backdrop-filter:blur(6px);box-shadow:0 3px 10px rgba(0,0,0,.06);font-size:13px}
-.badge{padding:4px 8px;border-radius:999px;font-size:11px;border:1px solid #e6eef8;background:#fff}
-.badgeRank{background:#e9f3ff;border-color:#cfe3ff;color:#0e6eb8}
-.badgePhoto{background:#fff7db;border-color:#ffe6a3;color:#8a6a00}
 
-#prewrap{padding:14px;display:grid;gap:14px;grid-template-columns:1fr;max-width:1200px;margin:0 auto}
-@media(min-width:980px){ #prewrap{grid-template-columns:1.4fr .9fr} }
-.boarding{background:#fff;border-radius:18px;overflow:hidden;border:1px solid #e3eef8;box-shadow:0 12px 28px rgba(0,0,0,.08)}
+/* 출국 준비 레이아웃 */
+#prewrap{padding:14px;display:grid;gap:14px;grid-template-columns:1fr;max-width:1100px;margin:0 auto}
+@media(min-width:920px){ #prewrap{grid-template-columns:1.4fr .9fr} }
+
+/* 보딩패스 카드 */
+.boarding{
+  background:#fff;border-radius:18px;overflow:hidden;border:1px solid #e3eef8;
+  box-shadow:0 12px 28px rgba(0,0,0,.08)
+}
 .bp-top{background:#2a3f70;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+.bp-top .title{font-weight:700;letter-spacing:.5px}
 .bp-body{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px}
 .bp-field{background:#f7fbff;border:1px dashed #cfe3f7;border-radius:12px;padding:10px}
 .bp-label{font-size:11px;opacity:.7}
+.bp-value{font-size:15px;font-weight:700}
 .bp-input{width:100%;margin-top:6px;padding:10px;border-radius:10px;border:1px solid #cfe7f7}
-.bp-row{grid-column:1/-1}
+.bp-row{grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.small{font-size:12px;opacity:.75}
 
-.passport{position:relative;min-height:320px;background:#0b3b2e;color:#d9c78f;border-radius:18px;padding:18px;border:1px solid #d3c8a1;box-shadow:0 12px 28px rgba(0,0,0,.1)}
-.passport .nameBox{margin-top:14px;background:#123e32;border:1px solid var(--gold);border-radius:10px;padding:12px;color:#fff}
-.passport input{width:100%;margin-top:6px;padding:10px;border-radius:8px;border:1px solid var(--gold);background:#0d3126;color:#fff}
-.passport .badge{position:absolute;right:14px;top:14px;background:#18304633;color:#fff;border:1px solid var(--gold);padding:6px 10px;border-radius:999px;font-size:12px}
+/* 여권 카드 */
+.passport{
+  position:relative;min-height:320px;background:#0b3b2e; /* 딥 그린 */
+  color:#d9c78f;border-radius:18px;padding:18px;border:1px solid #d3c8a1;
+  box-shadow:0 12px 28px rgba(0,0,0,.1);
+  background-image: radial-gradient(ellipse at 30% 10%, rgba(255,255,255,.08), transparent 60%),
+                    radial-gradient(ellipse at 80% 80%, rgba(255,255,255,.06), transparent 60%);
+}
+.passport h3{margin:0 0 8px;font-weight:700;letter-spacing:.5px}
+.passport .ko{font-weight:700}
+.passport .en{font-size:12px;opacity:.9}
+.passport .nameBox{
+  margin-top:14px;background:#123e32;border:1px solid #cdbf8e;border-radius:10px;padding:12px;color:#fff
+}
+.passport .nameBox label{font-size:12px;opacity:.9}
+.passport input{
+  width:100%;margin-top:6px;padding:10px;border-radius:8px;border:1px solid #cdbf8e;background:#0d3126;color:#fff
+}
+.passport .badge{
+  position:absolute;right:14px;top:14px;background:#18304633;color:#fff;border:1px solid #cdbf8e;
+  padding:6px 10px;border-radius:999px;font-size:12px
+}
 
-#controls{position:absolute;z-index:1000;left:50%;transform:translateX(-50%);top:74px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:1060px}
-.ticket{display:flex;gap:10px;align-items:center;padding:12px;background:var(--glass);border:1px dashed #cde8f7;border-radius:16px;box-shadow:0 10px 24px rgba(0,0,0,.08);backdrop-filter:blur(6px)}
-.ticket input{width:220px;max-width:60vw;padding:10px 12px;border-radius:12px;border:1px solid #cfe7f7;outline:none;font-size:14px;background:#fff}
+/* 출국 버튼 */
+#departWrap{display:flex;justify-content:center;padding:10px}
+#departBtn{min-width:220px}
+
+/* 지도 화면 */
+#controls{
+  position:absolute;z-index:1000;left:50%;transform:translateX(-50%);
+  top:74px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:960px
+}
+.ticket{
+  display:flex;gap:10px;align-items:center;padding:12px;background:var(--glass);
+  border:1px dashed #cde8f7;border-radius:16px;box-shadow:0 10px 24px rgba(0,0,0,.08);backdrop-filter:blur(6px)
+}
+.ticket input{
+  width:220px;max-width:60vw;padding:10px 12px;border-radius:12px;border:1px solid #cfe7f7;outline:none;font-size:14px;background:#fff
+}
 #map{height:100%;width:100%}
 .leaflet-top.leaflet-left{top:130px}
 
-#memoryList{position:absolute;z-index:1000;left:12px;bottom:12px;width:min(340px,90vw);max-height:44vh;overflow:auto;background:var(--glass);border:1px solid #d6eefd;border-radius:16px;box-shadow:0 8px 20px rgba(0,0,0,.08);padding:10px 12px}
+/* 추억 리스트 */
+#memoryList{
+  position:absolute;z-index:1000;left:12px;bottom:12px;width:min(320px,90vw);max-height:40vh;overflow:auto;
+  background:var(--glass);border:1px solid #d6eefd;border-radius:16px;box-shadow:0 8px 20px rgba(0,0,0,.08);padding:10px 12px
+}
 #memoryList h3{margin:4px 0 8px;font-size:14px;color:var(--ka-blue)}
 .mem{display:flex;gap:8px;align-items:center;padding:6px;border-radius:10px;cursor:pointer}
 .mem:hover{background:#f2f9ff}
 
-#quickActions{position:absolute;right:12px;bottom:12px;z-index:1200;display:grid;gap:8px}
-.quickCard{background:var(--glass);border:1px solid #e6eef8;border-radius:14px;box-shadow:0 8px 20px rgba(0,0,0,.08);padding:10px;display:grid;gap:8px}
-
+/* 모달 */
 .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.35);z-index:2000;padding:16px}
-.modalCard{width:min(520px,94vw);background:#fff;border-radius:16px;padding:16px;box-shadow:0 22px 48px rgba(0,0,0,.22);border:1px solid #e8f2fb}
+.modalCard{width:min(460px,94vw);background:#fff;border-radius:16px;padding:16px;box-shadow:0 22px 48px rgba(0,0,0,.22);border:1px solid #e8f2fb}
 .modalCard h3{margin:0 0 8px;color:var(--ka-blue)}
 .modalActions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
-
-#achvTitle{font-size:26px;color:var(--ok);margin:6px 0 0;font-weight:800;text-align:center}
-#achvBadge{display:inline-block;margin-top:8px;padding:10px 14px;border-radius:999px;background:#eafff4;color:#0b6b45;border:1px solid #b9f1d7;font-weight:800}
-
-#galleryModal .modalCard{width:min(720px,96vw)}
-.galleryHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.galleryTitle{font-weight:800;color:#0e6eb8}
-.galleryWrap{position:relative;overflow:hidden;border-radius:12px;border:1px solid #e6eef8;background:#000}
-.galleryStage{display:flex;transition:transform .35s ease}
-.galleryItem{min-width:100%;display:flex;align-items:center;justify-content:center;background:#000}
-.galleryItem img{max-width:100%;max-height:54vh;display:block}
-.galleryNav{display:flex;justify-content:space-between;margin-top:8px;gap:8px}
-.galleryMeta{margin-top:8px;font-size:13px}
-.galleryMeta .by{opacity:.8}
-
-.icon-rot{display:inline-block;transform-origin:center;will-change:transform}
-@media(max-width:540px){ .bp-body{grid-template-columns:1fr} #controls{top:66px} }
 </style>
 </head>
 <body>
-  <div id="header">
-    <div id="title">
-      <div id="logoBadge">✈️</div>
-      <div>
-        <h1>TripLog</h1>
-        <p>우리의 여행 기록</p>
-      </div>
-    </div>
-    <div id="userChip" style="display:none">
-      <div id="chipName">GUEST</div>
-      <span class="badge badgeRank" id="chipRank">칭호: -</span>
-      <span class="badge badgePhoto" id="chipPhoto" style="display:none">추억전달자</span>
+
+<!-- 공통 헤더 -->
+<div id="header">
+  <div id="title">
+    <div id="logoBadge">✈️</div>
+    <div>
+      <h1>TripLog</h1>
+      <p>우리의 여행 기록</p>
     </div>
   </div>
+</div>
 
-  <!-- 출국 준비 -->
-  <section id="screen-preflight" class="active" aria-label="출국 준비">
-    <div id="prewrap">
-      <div class="boarding">
-        <div class="bp-top"><div>BOARDING PASS</div><div style="font-size:12px;opacity:.9">TripLog Air</div></div>
-        <div class="bp-body">
-          <div class="bp-field">
-            <div class="bp-label">From</div>
-            <div id="bp-from">ICN · 인천국제공항</div>
-          </div>
-          <div class="bp-field">
-            <div class="bp-label">To (나라 또는 공항명/코드)</div>
-            <input id="countryInput" class="bp-input" list="countryList" placeholder="예: 일본 / 오사카 간사이 / KIX">
-            <datalist id="countryList"></datalist>
-          </div>
-          <div class="bp-field">
-            <div class="bp-label">Region (지역)</div>
-            <input id="regionInput" class="bp-input" placeholder="예: 오사카, 파리, 다낭">
-          </div>
-          <div class="bp-field">
-            <div class="bp-label">Date · Time</div>
-            <div id="bp-dt"></div>
-          </div>
-          <div class="bp-row" style="font-size:12px;opacity:.75">공항명을 직접 쓰거나 코드(KIX 등)를 써도 비행합니다.</div>
-        </div>
+<!-- ── 출국 준비 화면 ─────────────────────────────── -->
+<section id="screen-preflight" class="active" aria-label="출국 준비">
+  <div id="prewrap">
+    <!-- 좌: 보딩패스 -->
+    <div class="boarding">
+      <div class="bp-top">
+        <div class="title">BOARDING PASS</div>
+        <div class="small">Carrier · TripLog Air</div>
       </div>
-
-      <div class="passport">
-        <div class="badge">REPUBLIC OF KOREA</div>
-        <h3>대한민국 여권</h3>
-        <div class="nameBox">
-          <label>여권 영문명 (Passenger Name)</label>
-          <input id="passengerName" placeholder="예: EUNCHAN KIM" />
+      <div class="bp-body">
+        <div class="bp-field">
+          <div class="bp-label">From</div>
+          <div class="bp-value" id="bp-from">ICN · 인천국제공항</div>
         </div>
-        <div style="margin-top:12px;font-size:12px;opacity:.85">
-          이름을 입력하면 그 이름의 프로필이 활성화됩니다. (칭호·비행/사진 기록 유지)
+        <div class="bp-field">
+          <div class="bp-label">To (나라)</div>
+          <input id="countryInput" class="bp-input" list="countryList" placeholder="예: 일본, 프랑스, 베트남">
+          <datalist id="countryList"></datalist>
+        </div>
+
+        <div class="bp-field">
+          <div class="bp-label">Region (지역)</div>
+          <input id="regionInput" class="bp-input" placeholder="예: 오사카, 파리, 다낭">
+        </div>
+        <div class="bp-field">
+          <div class="bp-label">Date · Time</div>
+          <div class="bp-value" id="bp-dt"></div>
+        </div>
+
+        <div class="bp-row small">
+          입력한 국가는 도착 공항을 선택할 수 있어요(일본/베트남은 복수 공항).
         </div>
       </div>
     </div>
-    <div style="display:flex;justify-content:center;padding:10px">
-      <button id="departBtn" class="btn btnPrimary">✈️ 출국</button>
-    </div>
-  </section>
 
-  <!-- 지도 화면 -->
-  <section id="screen-map" aria-label="여행 지도">
-    <div id="controls">
-      <div class="ticket">
-        🌍 <input id="countryInput2" type="text" placeholder="나라/공항명/코드 입력" list="countryList">
-        <button class="btn" id="btnFly">✈️ 출발</button>
+    <!-- 우: 여권 -->
+    <div class="passport">
+      <div class="badge">REPUBLIC OF KOREA</div>
+      <h3 class="ko">대한민국</h3>
+      <div class="en">REPUBLIC OF KOREA · PASSPORT</div>
+
+      <div class="nameBox">
+        <label>여권 영문명 (Passenger Name)</label>
+        <input id="passengerName" placeholder="예: EUNCHAN KIM">
       </div>
-      <div class="ticket">
-        🗺️ <input id="regionInput2" type="text" placeholder="지역 입력 (예: 오사카, 파리, 다낭)">
-        <button class="btn" id="btnDrive">🚕 이동</button>
-      </div>
-    </div>
-    <div id="map"></div>
 
-    <div id="memoryList" aria-live="polite">
-      <h3>📸 저장된 추억 (누구나 열람 가능)</h3>
-      <div id="memWrap"></div>
-    </div>
-
-    <div id="quickActions">
-      <div class="quickCard">
-        <button class="btnGhost" id="qaHint">📍 장소를 탭해서 추억 저장</button>
-        <button class="btnWarn"  id="qaReturn">🇰🇷 귀국</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- 공항 선택 모달 -->
-  <div class="modal" id="airportModal">
-    <div class="modalCard">
-      <h3>도착 공항 선택</h3>
-      <div id="airportOptions"></div>
-      <div class="modalActions">
-        <button class="btn" id="airportCancel">취소</button>
-        <button class="btn btnPrimary" id="airportOk">비행 시작</button>
+      <div style="margin-top:14px;font-size:12px;opacity:.85">
+        이름과 목적지를 입력한 뒤, 아래 <b>출국</b>을 누르면 여행이 시작됩니다.
       </div>
     </div>
   </div>
 
-  <!-- 추억 저장 모달 (장소 자동 라벨 추가) -->
-  <div class="modal" id="memoryModal">
-    <div class="modalCard">
-      <h3>추억 저장</h3>
-      <div style="font-size:12px;opacity:.75;margin-bottom:6px">지도에서 클릭/탭한 위치로 저장됩니다.</div>
+  <div id="departWrap">
+    <button id="departBtn" class="btn btnPrimary">✈️ 출국</button>
+  </div>
+</section>
 
-      <label style="font-size:12px;opacity:.8">📍 장소 이름 (자동):</label>
-      <input type="text" id="placeName" placeholder="예: 도쿄 타워" style="width:100%;margin:6px 0 10px">
-
-      <input type="text" id="memoryTitle" placeholder="제목 (선택)" style="width:100%;margin:8px 0;">
-      <textarea id="memoryText" rows="4" style="width:100%;margin:8px 0;" placeholder="사진 설명/메모를 남겨보세요"></textarea>
-      <input type="file" id="memoryImage" accept="image/*" style="margin:8px 0;">
-      <div style="font-size:12px;opacity:.7;margin-top:2px">작성자: <span id="authorPreview"></span></div>
-      <div class="modalActions">
-        <button class="btn" id="memCancel">닫기</button>
-        <button class="btn btnPrimary" id="memSave">저장</button>
-      </div>
+<!-- ── 지도 화면 ─────────────────────────────────── -->
+<section id="screen-map" aria-label="여행 지도">
+  <!-- 상단 검색(네비/티켓 느낌) -->
+  <div id="controls">
+    <div class="ticket">
+      🌍 <input id="countryInput2" type="text" placeholder="나라 다시 입력/변경" list="countryList">
+      <button class="btn" id="btnFly">✈️ 출발</button>
+    </div>
+    <div class="ticket">
+      🗺️ <input id="regionInput2" type="text" placeholder="지역 입력 (예: 오사카, 파리, 다낭)">
+      <button class="btn" id="btnDrive">🚕 이동</button>
     </div>
   </div>
 
-  <!-- 갤러리(슬라이드) 모달 -->
-  <div class="modal" id="galleryModal">
-    <div class="modalCard">
-      <div class="galleryHead">
-        <div class="galleryTitle" id="galPlace">이 장소의 추억</div>
-        <button class="btn" id="galClose">닫기</button>
-      </div>
-      <div class="galleryWrap" id="galWrap">
-        <div class="galleryStage" id="galStage"></div>
-      </div>
-      <div class="galleryNav">
-        <button class="btn" id="galPrev">◀ 이전</button>
-        <button class="btn" id="galNext">다음 ▶</button>
-      </div>
-      <div class="galleryMeta">
-        <div id="galCaption" style="white-space:pre-wrap"></div>
-        <div class="by" id="galBy"></div>
-      </div>
-    </div>
-  </div>
+  <div id="map"></div>
 
-  <!-- 업적 모달 -->
-  <div class="modal" id="achvModal">
-    <div class="modalCard" style="text-align:center">
-      <div style="font-size:22px;font-weight:800;color:#0e6eb8">조건 달성! 칭호 획득</div>
-      <div id="achvTitle">—</div>
-      <div id="achvBadge">—</div>
-      <div class="modalActions" style="justify-content:center;margin-top:10px">
-        <button class="btn btnPrimary" id="achvOk">확인</button>
-      </div>
-    </div>
+  <!-- 추억 리스트 -->
+  <div id="memoryList" aria-live="polite">
+    <h3>📸 저장된 추억</h3>
+    <div id="memWrap"></div>
   </div>
+</section>
 
-  <!-- 귀국 도착 모달 -->
-  <div class="modal" id="returnModal">
-    <div class="modalCard" style="text-align:center">
-      <h3>🇰🇷 한국 도착</h3>
-      <div style="margin-top:4px">여행을 종료하시겠어요, 아니면 계속하시겠어요?</div>
-      <div class="modalActions" style="justify-content:center;margin-top:10px">
-        <button class="btn" id="retContinue">계속하기 (티켓만)</button>
-        <button class="btn btnPrimary" id="retEnd">여행 종료</button>
-      </div>
+<!-- 공항 선택 모달 -->
+<div class="modal" id="airportModal">
+  <div class="modalCard">
+    <h3>도착 공항 선택</h3>
+    <div id="airportOptions"></div>
+    <div class="modalActions">
+      <button class="btn" id="airportCancel">취소</button>
+      <button class="btn btnPrimary" id="airportOk">비행 시작</button>
     </div>
   </div>
+</div>
+
+<!-- 추억 저장 모달 -->
+<div class="modal" id="memoryModal">
+  <div class="modalCard">
+    <h3>추억 저장</h3>
+    <div style="display:flex;gap:8px;margin:8px 0;">
+      <input type="text" id="memoryTitle" placeholder="제목 (선택)">
+    </div>
+    <div style="display:flex;gap:8px;margin:8px 0;">
+      <textarea id="memoryText" rows="4" style="width:100%;" placeholder="메모를 남겨보세요"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;margin:8px 0;">
+      <input type="file" id="memoryImage" accept="image/*">
+    </div>
+    <div class="modalActions">
+      <button class="btn" id="memCancel">닫기</button>
+      <button class="btn btnPrimary" id="memSave">저장</button>
+    </div>
+  </div>
+</div>
 
 <script>
-/* ========= 전역 ========= */
+/* ========== 공통 상태/유틸 ========== */
 let map, geocoder, planeMarker, carMarker, currentAirportLatLng=null, clickLatLng=null;
 const memoryLayer = L.layerGroup(); const pathsLayer = L.layerGroup();
-const ICN = {code:"ICN",name:"인천국제공항",lat:37.4602,lng:126.4407};
 const toRad = d=>d*Math.PI/180, toDeg = r=>r*180/Math.PI;
 const easeInOut = t => t<.5 ? 2*t*t : -1+(4-2*t)*t;
+const bearing = (a,b)=>{const φ1=toRad(a.lat),φ2=toRad(b.lat),Δλ=toRad(b.lng-a.lng);
+  const y=Math.sin(Δλ)*Math.cos(φ2),x=Math.cos(φ1)*Math.sin(φ2)-Math.sin(φ1)*Math.cos(φ2)*Math.cos(Δλ);
+  return (toDeg(Math.atan2(y,x))+360)%360;};
+function emojiIcon(html){return L.divIcon({className:'emoji-icon',html:`<span class="emoji-rotate" style="font-size:28px;transform-origin:center;">${html}</span>`,iconSize:[36,36],iconAnchor:[18,18]});}
+function setEmojiRotation(marker,deg){const el=marker?._icon?.querySelector('.emoji-rotate'); if(el){el.style.transform=`rotate(${deg}deg)`;}}
+function openModal(id){document.getElementById(id).style.display='flex';}
+function closeModal(id){document.getElementById(id).style.display='none';}
+function fileToDataURL(file){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=rej;fr.readAsDataURL(file);});}
 function nowKR(){const d=new Date();return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;}
 document.getElementById('bp-dt').textContent = nowKR();
-function bearing(a,b){
-  const φ1=toRad(a.lat), φ2=toRad(b.lat), Δλ=toRad(b.lng-a.lng);
-  const y=Math.sin(Δλ)*Math.cos(φ2), x=Math.cos(φ1)*Math.sin(φ2)-Math.sin(φ1)*Math.cos(φ2)*Math.cos(Δλ);
-  return (toDeg(Math.atan2(y,x))+360)%360;
-}
-function setRotation(marker,deg){const el=marker?._icon?.querySelector('.icon-rot'); if(el){el.style.transform=`rotate(${deg}deg)`;}}
 
-/* 탑뷰 아이콘 */
-function makePlaneIcon(){
-  const svg = `<svg width="40" height="40" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
-    <g fill="#0e6eb8">
-      <rect x="36" y="10" width="8" height="42" rx="3"></rect>
-      <polygon points="40,4 34,12 46,12" />
-      <polygon points="18,34 62,34 70,40 10,40" />
-      <polygon points="30,52 50,52 46,66 34,66" />
-      <rect x="37" y="66" width="6" height="8" rx="2"></rect>
-    </g></svg>`;
-  return L.divIcon({className:"", html:`<span class="icon-rot">${svg}</span>`, iconSize:[40,40], iconAnchor:[20,20]});
-}
-function makeTaxiIcon(){
-  const svg = `<svg width="40" height="40" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
-    <g>
-      <circle cx="18" cy="20" r="6" fill="#333"/><circle cx="62" cy="20" r="6" fill="#333"/>
-      <circle cx="18" cy="60" r="6" fill="#333"/><circle cx="62" cy="60" r="6" fill="#333"/>
-      <rect x="18" y="14" width="44" height="52" rx="12" fill="#ffd21f" stroke="#caa300" stroke-width="2"/>
-      <rect x="26" y="20" width="28" height="12" rx="4" fill="#fff"/>
-      <rect x="22" y="38" width="36" height="8" fill="#000"/>
-      <rect x="26" y="38" width="6" height="8" fill="#ffd21f"/><rect x="38" y="38" width="6" height="8" fill="#ffd21f"/><rect x="50" y="38" width="6" height="8" fill="#ffd21f"/>
-    </g></svg>`;
-  return L.divIcon({className:"", html:`<span class="icon-rot">${svg}</span>`, iconSize:[40,40], iconAnchor:[20,20]});
-}
-
-/* 공항 DB (OECD + 동남아 + 러시아 + 다공항) */
+/* ========== 공항 DB (OECD + 동남아 + 러시아, 대표 1개 / 일본·베트남 다중) ========== */
 const airports = {
-  "대한민국":[ICN],
+  "대한민국":[{code:"ICN",name:"인천국제공항",lat:37.4602,lng:126.4407}],
   "일본":[
-    {code:"NRT",name:"도쿄 나리타",lat:35.7719,lng:140.3929},
-    {code:"HND",name:"도쿄 하네다",lat:35.5494,lng:139.7798},
-    {code:"KIX",name:"오사카 간사이",lat:34.4347,lng:135.2442},
-    {code:"FUK",name:"후쿠오카",lat:33.5859,lng:130.4500},
-    {code:"CTS",name:"신치토세(삿포로)",lat:42.7752,lng:141.6923},
-    {code:"OKA",name:"나하(오키나와)",lat:26.2068,lng:127.6469}
+    {code:"NRT",name:"도쿄 나리타 국제공항",lat:35.7719,lng:140.3929},
+    {code:"HND",name:"도쿄 하네다 국제공항",lat:35.5494,lng:139.7798},
+    {code:"KIX",name:"오사카 간사이 국제공항",lat:34.4347,lng:135.2442},
+    {code:"FUK",name:"후쿠오카 공항",lat:33.5859,lng:130.4500},
+    {code:"CTS",name:"삿포로 신치토세",lat:42.7752,lng:141.6923}
   ],
   "베트남":[
     {code:"HAN",name:"하노이 노이바이",lat:21.2210,lng:105.8072},
     {code:"SGN",name:"호찌민 떤선녓",lat:10.8188,lng:106.6519},
-    {code:"DAD",name:"다낭",lat:16.0439,lng:108.1994},
+    {code:"DAD",name:"다낭 국제공항",lat:16.0439,lng:108.1994},
     {code:"CXR",name:"나트랑 깜라인",lat:11.9981,lng:109.2194},
-    {code:"PQC",name:"푸꾸옥",lat:10.1698,lng:103.9931},
-    {code:"HUI",name:"후에",lat:16.4015,lng:107.703}
+    {code:"PQC",name:"푸꾸옥",lat:10.1698,lng:103.9931}
   ],
-  "중국":[
-    {code:"PEK",name:"베이징 수도",lat:40.0799,lng:116.6031},
-    {code:"PKX",name:"베이징 다싱",lat:39.5099,lng:116.4108},
-    {code:"PVG",name:"상하이 푸둥",lat:31.1443,lng:121.8083},
-    {code:"SHA",name:"상하이 훙차오",lat:31.1979,lng:121.3363},
-    {code:"CAN",name:"광저우 바이윈",lat:23.3924,lng:113.2988},
-    {code:"SZX",name:"선전 바오안",lat:22.6393,lng:113.8107},
-    {code:"CTU",name:"청두 솽류",lat:30.5785,lng:103.9471},
-    {code:"HGH",name:"항저우 샤오산",lat:30.2362,lng:120.4324},
-    {code:"XMN",name:"샤먼 가오치",lat:24.5440,lng:118.1278}
-  ],
+  /* OECD */
   "미국":[{code:"JFK",name:"뉴욕 JFK",lat:40.6413,lng:-73.7781}],
   "캐나다":[{code:"YYZ",name:"토론토 피어슨",lat:43.6777,lng:-79.6248}],
-  "멕시코":[{code:"MEX",name:"멕시코시티",lat:19.4361,lng:-99.0719}],
+  "멕시코":[{code:"MEX",name:"멕시코시티 AICM",lat:19.4361,lng:-99.0719}],
+  "칠레":[{code:"SCL",name:"산티아고 아르투로 메리노",lat:-33.3929,lng:-70.7858}],
+  "콜롬비아":[{code:"BOG",name:"보고타 엘도라도",lat:4.7016,lng:-74.1469}],
+  "코스타리카":[{code:"SJO",name:"산호세 SJO",lat:9.9939,lng:-84.2088}],
+  "호주":[{code:"SYD",name:"시드니",lat:-33.9399,lng:151.1753}],
+  "뉴질랜드":[{code:"AKL",name:"오클랜드",lat:-37.0082,lng:174.7850}],
   "영국":[{code:"LHR",name:"런던 히드로",lat:51.47,lng:-0.4543}],
+  "아일랜드":[{code:"DUB",name:"더블린",lat:53.4273,lng:-6.2436}],
   "프랑스":[{code:"CDG",name:"파리 샤를드골",lat:49.0097,lng:2.5479}],
   "독일":[{code:"FRA",name:"프랑크푸르트",lat:50.0379,lng:8.5622}],
   "이탈리아":[{code:"FCO",name:"로마 피우미치노",lat:41.8003,lng:12.2389}],
   "스페인":[{code:"MAD",name:"마드리드 바라하스",lat:40.4983,lng:-3.5676}],
-  "네덜란드":[{code:"AMS",name:"스키폴",lat:52.3105,lng:4.7683}],
+  "포르투갈":[{code:"LIS",name:"리스본",lat:38.7742,lng:-9.1342}],
+  "네덜란드":[{code:"AMS",name:"암스테르담 스키폴",lat:52.3105,lng:4.7683}],
+  "벨기에":[{code:"BRU",name:"브뤼셀",lat:50.9010,lng:4.4844}],
+  "룩셈부르크":[{code:"LUX",name:"룩셈부르크",lat:49.6266,lng:6.2115}],
   "스위스":[{code:"ZRH",name:"취리히",lat:47.4581,lng:8.5555}],
   "오스트리아":[{code:"VIE",name:"비엔나",lat:48.1103,lng:16.5697}],
   "덴마크":[{code:"CPH",name:"코펜하겐",lat:55.6180,lng:12.6508}],
-  "노르웨이":[{code:"OSL",name:"오슬로",lat:60.1976,lng:11.1004}],
-  "스웨덴":[{code:"ARN",name:"알란다",lat:59.6498,lng:17.9238}],
-  "핀란드":[{code:"HEL",name:"헬싱키",lat:60.3172,lng:24.9633}],
+  "노르웨이":[{code:"OSL",name:"오슬로 가르데르모엔",lat:60.1976,lng:11.1004}],
+  "스웨덴":[{code:"ARN",name:"스톡홀름 알란다",lat:59.6498,lng:17.9238}],
+  "핀란드":[{code:"HEL",name:"헬싱키 반타",lat:60.3172,lng:24.9633}],
+  "아이슬란드":[{code:"KEF",name:"케플라비크",lat:63.9978,lng:-22.6243}],
+  "폴란드":[{code:"WAW",name:"바르샤바 쇼팽",lat:52.1657,lng:20.9671}],
+  "체코":[{code:"PRG",name:"프라하",lat:50.1062,lng:14.2669}],
+  "슬로바키아":[{code:"BTS",name:"브라티슬라바",lat:48.1698,lng:17.1996}],
+  "헝가리":[{code:"BUD",name:"부다페스트",lat:47.4369,lng:19.2556}],
+  "슬로베니아":[{code:"LJU",name:"류블랴나",lat:46.2237,lng:14.4576}],
+  "크로아티아":[{code:"ZAG",name:"자그레브",lat:45.7429,lng:16.0688}],
   "그리스":[{code:"ATH",name:"아테네",lat:37.9364,lng:23.9475}],
   "터키":[{code:"IST",name:"이스탄불",lat:41.2753,lng:28.7519}],
+  "이스라엘":[{code:"TLV",name:"텔아비브 벤구리온",lat:32.0005,lng:34.8707}],
+  "포럼국가":[], /* placeholder */
+  "라트비아":[{code:"RIX",name:"리가",lat:56.9221,lng:23.9798}],
+  "리투아니아":[{code:"VNO",name:"빌뉴스",lat:54.6340,lng:25.2857}],
+  "에스토니아":[{code:"TLL",name:"탈린",lat:59.4133,lng:24.8328}],
+  "스코틀랜드": [{code:"EDI",name:"에든버러",lat:55.9503,lng:-3.3725}], /* 편의상 */
+  /* 동남아(ASEAN) */
   "싱가포르":[{code:"SIN",name:"창이",lat:1.3644,lng:103.9915}],
   "말레이시아":[{code:"KUL",name:"쿠알라룸푸르",lat:2.7456,lng:101.709}],
-  "인도네시아":[{code:"CGK",name:"수카르노-하타",lat:-6.1256,lng:106.6559}],
-  "태국":[{code:"BKK",name:"수완나품",lat:13.69,lng:100.7501}],
-  "필리핀":[{code:"MNL",name:"마닐라",lat:14.5086,lng:121.0198}],
-  "러시아":[{code:"SVO",name:"모스크바 셰레메티예보",lat:55.9726,lng:37.4146}],
-  "호주":[{code:"SYD",name:"시드니",lat:-33.9399,lng:151.1753}],
-  "뉴질랜드":[{code:"AKL",name:"오클랜드",lat:-37.0082,lng:174.7850}]
+  "인도네시아":[{code:"CGK",name:"자카르타 수카르노-하타",lat:-6.1256,lng:106.6559}],
+  "태국":[{code:"BKK",name:"방콕 수완나품",lat:13.6900,lng:100.7501}],
+  "필리핀":[{code:"MNL",name:"마닐라 NAIA",lat:14.5086,lng:121.0198}],
+  "캄보디아":[{code:"PNH",name:"프놈펜",lat:11.5466,lng:104.8439}],
+  "라오스":[{code:"VTE",name:"비엔티안",lat:17.9883,lng:102.5630}],
+  "브루나이":[{code:"BWN",name:"반다르스리브가완",lat:4.9442,lng:114.9283}],
+  "미얀마":[{code:"RGN",name:"양곤",lat:16.9073,lng:96.1332}],
+  /* 러시아 */
+  "러시아":[{code:"SVO",name:"모스크바 셰레메티예보",lat:55.9726,lng:37.4146}]
 };
-let lastCountryName = "";
+const ICN = airports["대한민국"][0];
+
+/* datalist 채우기 */
 (function fillCountries(){
-  const dl=document.getElementById('countryList');
-  Object.keys(airports).forEach(n=>{const o=document.createElement('option');o.value=n;dl.appendChild(o);});
-})();
-const airportByNameOrCode = {};
-Object.entries(airports).forEach(([country, list])=>{
-  list.forEach(ap=>{
-    airportByNameOrCode[ap.code.toLowerCase()] = ap;
-    airportByNameOrCode[ap.name.toLowerCase()] = ap;
+  const dl = document.getElementById('countryList');
+  const names = Object.keys(airports).filter(k=>airports[k].length);
+  names.sort().forEach(n=>{
+    const o=document.createElement('option');o.value=n;dl.appendChild(o);
   });
-});
+})();
 
-/* 멀티 유저 + 칭호 */
-const USER_KEY='triplog_users_v1';
-function loadUsers(){ try{ return JSON.parse(localStorage.getItem(USER_KEY)||'{}'); }catch(e){ return {}; } }
-function saveUsers(obj){ localStorage.setItem(USER_KEY, JSON.stringify(obj)); }
-function ensureUser(name){ const users=loadUsers(); if(!users[name]) users[name]={ flights:0, photos:0, rankIdx:0 }; saveUsers(users); return users[name]; }
-function setActiveUser(name){ window.TRIPLOG_USER = name; ensureUser(name); updateUserChip(); }
-function getActiveUser(){ const users=loadUsers(); return users[window.TRIPLOG_USER] || {flights:0,photos:0,rankIdx:0}; }
-function updateUser(obj){ const users=loadUsers(); users[window.TRIPLOG_USER]=obj; saveUsers(users); }
-const RANKS = ["초보 여행가","루키 여행가","아마추어 여행가","프로 여행가","엘리트 여행가","트래블 마스터"];
-function rankByFlights(f){ const idx = Math.min(5, Math.floor(f/30)); return {idx, name:RANKS[idx]}; }
-function maybeAwardRank(oldFlights,newFlights){ const oldR=rankByFlights(oldFlights), nowR=rankByFlights(newFlights); if(nowR.idx>oldR.idx){ showAchievement(`비행 ${newFlights}회 달성!`, nowR.name); } }
-function updatePhotoChampion(){ const users=loadUsers(); let topName=null, topCount=-1; Object.entries(users).forEach(([n,u])=>{ if(n==='_photoChampion') return; if(u.photos>topCount){ topCount=u.photos; topName=n; } }); const prev = users._photoChampion || null; users._photoChampion = topName || null; saveUsers(users); if(topName && topName===window.TRIPLOG_USER && prev!==topName){ showAchievement("사진 최다 등록자!", "추억전달자"); } }
-function isPhotoChampion(name){ const users=loadUsers(); return users._photoChampion && users._photoChampion===name; }
-function updateUserChip(){ const chip=document.getElementById('userChip'); const name=window.TRIPLOG_USER||'GUEST'; const u=getActiveUser(); const r=rankByFlights(u.flights); chip.style.display='flex'; document.getElementById('chipName').textContent = name; document.getElementById('chipRank').textContent = `칭호: ${r.name}`; document.getElementById('chipPhoto').style.display = isPhotoChampion(name)?'inline-block':'none'; }
-function showAchievement(title,badge){ document.getElementById('achvTitle').textContent = title; document.getElementById('achvBadge').textContent = badge; openModal('achvModal'); }
-document.getElementById('achvOk').onclick=()=>closeModal('achvModal');
-
-/* 출국 */
+/* ========== 출국 버튼 → 지도화면 전환 & 비행 ========== */
 document.getElementById('departBtn').addEventListener('click', ()=>{
-  const name=document.getElementById('passengerName').value.trim();
-  const dest=document.getElementById('countryInput').value.trim();
-  const region=document.getElementById('regionInput').value.trim();
+  const name = document.getElementById('passengerName').value.trim();
+  const country = document.getElementById('countryInput').value.trim();
+  const region = document.getElementById('regionInput').value.trim();
   if(!name){alert('여권 이름을 입력해주세요.');return;}
-  if(!dest){alert('나라/공항을 입력해주세요.');return;}
-  setActiveUser(name); document.getElementById('authorPreview').textContent = name;
+  if(!country){alert('나라를 입력해주세요.');return;}
+
+  // 지도 화면 준비
+  initMapIfNeeded();
   document.getElementById('screen-preflight').classList.remove('active');
   document.getElementById('screen-map').classList.add('active');
-  setTimeout(initMapIfNeeded,0); setTimeout(()=>map.invalidateSize(),250);
-  document.getElementById('countryInput2').value = dest;
-  document.getElementById('regionInput2').value   = region;
-  flyToDestination(dest, region);
+
+  // 상단 입력에도 값 반영
+  document.getElementById('countryInput2').value = country;
+  document.getElementById('regionInput2').value = region;
+
+  // 비행 시작
+  flyToCountry(country, region);
 });
 
-/* 지도 초기화 */
+/* ========== 지도/지오코더/메모 UI 초기화 ========== */
 function initMapIfNeeded(){
   if(map) return;
   map = L.map('map', { zoomControl:true }).setView([37.5665,126.9780], 5);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
   geocoder = L.Control.Geocoder.nominatim();
-  L.Control.geocoder({ placeholder: '보조 검색(장소명)' }).addTo(map);
+  L.Control.geocoder({ placeholder: '장소 검색(보조용)' }).addTo(map);
   memoryLayer.addTo(map); pathsLayer.addTo(map);
 
-  // 지도 클릭 → 역지오코딩 후 모달
-  map.on('click', async (e)=>{
-    clickLatLng=e.latlng;
-    document.getElementById('authorPreview').textContent = window.TRIPLOG_USER || '익명';
-    await fillPlaceAuto(clickLatLng.lat, clickLatLng.lng);
-    openModal('memoryModal');
-  });
+  // 지도 클릭 → 추억 저장
+  map.on('click', (e)=>{ clickLatLng=e.latlng; openModal('memoryModal'); });
 
-  document.getElementById('btnFly').onclick = ()=> flyToDestination(document.getElementById('countryInput2').value.trim());
+  // 버튼 바인딩
+  document.getElementById('btnFly').onclick = ()=> flyToCountry(document.getElementById('countryInput2').value.trim());
   document.getElementById('btnDrive').onclick = ()=> driveToRegion(document.getElementById('regionInput2').value.trim());
 
+  // 메모 모달
   document.getElementById('memCancel').onclick = ()=> closeModal('memoryModal');
   document.getElementById('memSave').onclick = saveMemory;
 
-  document.getElementById('qaHint').onclick = ()=> alert('지도를 움직여 장소를 고른 뒤, 지점을 탭/클릭하면 추억 저장 창이 열립니다.');
-  document.getElementById('qaReturn').onclick = returnHome;
-
-  document.getElementById('galPrev').onclick = ()=> galleryStep(-1);
-  document.getElementById('galNext').onclick = ()=> galleryStep(+1);
-  document.getElementById('galClose').onclick = ()=> closeModal('galleryModal');
-
   renderMemories();
+  window.addEventListener('resize', ()=> map.invalidateSize());
+  window.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){closeModal('airportModal');closeModal('memoryModal');} });
 }
 
-/* 공항 선택 모달 */
+/* ========== 공항 선택 / 비행 / 택시 이동 ========== */
 const airportModal = document.getElementById('airportModal');
 const airportOptions = document.getElementById('airportOptions');
 document.getElementById('airportCancel').onclick = ()=> closeModal('airportModal');
@@ -441,301 +406,132 @@ document.getElementById('airportOk').onclick = ()=>{
   doFly(ICN, ap);
 };
 let _pendingAirports = [];
+
 function showAirportChoice(list){
   airportOptions.innerHTML = list.map((ap,i)=>`
     <label style="display:flex;gap:8px;align-items:center;margin:6px 0;">
       <input type="radio" name="apSel" value="${i}" ${i===0?'checked':''}/>
       <div><strong>${ap.name}</strong><div style="font-size:12px;opacity:.7">${ap.code} · ${ap.lat.toFixed(3)}, ${ap.lng.toFixed(3)}</div></div>
     </label>`).join('');
-  _pendingAirports = list;
-  openModal('airportModal');
+  _pendingAirports = list; openModal('airportModal');
 }
 
-/* 지오코딩 */
-async function geocode(query){
-  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&accept-language=ko&q=${encodeURIComponent(query)}`;
-  const res = await fetch(url,{headers:{'Accept-Language':'ko'}});
-  if(!res.ok) return null;
-  const arr = await res.json();
-  if(!arr || arr.length===0) return null;
-  return { lat: parseFloat(arr[0].lat), lng: parseFloat(arr[0].lon), display: arr[0].display_name };
-}
-/* 역지오코딩 → 장소 자동 라벨 */
-async function reverseGeocode(lat,lng){
-  const url = `https://nominatim.openstreetmap.org/reverse?format=json&accept-language=ko&lat=${lat}&lon=${lng}&zoom=16&addressdetails=1`;
-  const res = await fetch(url, {headers:{'Accept-Language':'ko'}});
-  if(!res.ok) return null;
-  const data = await res.json();
-  // 우선순위: landmark/attraction/building/amenity → road+house_number → suburb/city → country
-  const a = data.address || {};
-  return data.name
-      || a.tourism
-      || a.attraction
-      || a.amenity
-      || a.building
-      || a.shop
-      || a.leisure
-      || a.road && (a.house_number ? `${a.road} ${a.house_number}` : a.road)
-      || a.suburb
-      || a.city
-      || a.town
-      || a.village
-      || data.display_name
-      || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-}
-async function fillPlaceAuto(lat,lng){
-  const name = await reverseGeocode(lat,lng);
-  const input = document.getElementById('placeName');
-  input.value = name || '';
-  // 제목이 비어있으면 장소 이름으로 기본 채우기
-  const titleEl = document.getElementById('memoryTitle');
-  if(!titleEl.value) titleEl.value = name || '';
-}
-
-/* 목적지 판단 → 비행 */
-async function flyToDestination(input, regionAfter){
-  if(!input){alert('나라/공항을 입력해주세요.');return;}
-  const key = input.trim().toLowerCase();
-  if(airportByNameOrCode[key]){
-    lastCountryName = findCountryByAirport(airportByNameOrCode[key]);
-    doFly(ICN, airportByNameOrCode[key], regionAfter);
+async function flyToCountry(country, regionOpt){
+  if(!country){alert('나라를 입력해주세요.');return;}
+  // 미리 등록된 공항이면: 일본/베트남은 선택, 나머지는 첫 번째 사용
+  if(airports[country]?.length){
+    if(airports[country].length>1){ showAirportChoice(airports[country]); }
+    else { doFly(ICN, airports[country][0]); }
     return;
   }
-  await flyToCountry(input, regionAfter);
-}
-function findCountryByAirport(ap){
-  for(const [c, list] of Object.entries(airports)){
-    if(list.some(a=>a.code===ap.code)) return c;
-  }
-  return '';
+  // 등록에 없으면 지오코딩으로 찾기
+  const target = await geocodeOne(`${country} 국제공항`) || await geocodeOne(`${country} airport`) || await geocodeOne(country);
+  if(!target){ alert('해당 국가를 찾을 수 없어요. 다른 표현으로 시도해보세요.'); return; }
+  doFly(ICN, {code:country.toUpperCase(), name:`${country} 도착 지점`, lat:target.lat, lng:target.lng});
 }
 
-/* 나라 비행 */
-async function flyToCountry(country, regionAfter){
-  if(!country){alert('나라를 입력해주세요.');return;}
-  lastCountryName = country;
-  const list = airports[country] || [];
-  if(list.length > 1){ showAirportChoice(list); return; }
-  if(list.length === 1){ doFly(ICN, list[0], regionAfter); return; }
-  const c = await geocode(country);
-  if(!c){ alert('해당 나라를 찾을 수 없어요. 다른 이름으로 시도해보세요.'); return; }
-  const pseudoAp = { code:"CTR", name:`${country} 중심`, lat:c.lat, lng:c.lng };
-  doFly(ICN, pseudoAp, regionAfter);
+function geocodeOne(query){
+  return new Promise(resolve=>{
+    geocoder.geocode(query, results=>{
+      if(results && results[0]){ const r=results[0]; resolve({lat:r.center.lat,lng:r.center.lng,name:r.name||query}); }
+      else resolve(null);
+    });
+  });
 }
 
-/* 비행(15초) */
-function doFly(fromAp, toAp, regionAfter){
-  currentAirportLatLng = null;
+function ensurePlane(){ if(!planeMarker){ planeMarker = L.marker([ICN.lat,ICN.lng],{icon:emojiIcon('✈️'),interactive:false}).addTo(map); } }
+function ensureCar(){ if(!carMarker){ carMarker = L.marker([ICN.lat,ICN.lng],{icon:emojiIcon('🚕'),interactive:false}).addTo(map); } }
+
+function animateTravel({start,end,marker,duration=15000,trailColor="#0e6eb8",onDone}){
   pathsLayer.clearLayers();
-  const start = L.latLng(fromAp.lat, fromAp.lng);
-  const end   = L.latLng(toAp.lat, toAp.lng);
-  L.polyline([start, end], {color:'#0e6eb8', weight:2, opacity:.6, dashArray:'6 8'}).addTo(pathsLayer);
-  if(planeMarker) map.removeLayer(planeMarker);
-  planeMarker = L.marker(start, { icon: makePlaneIcon(), interactive:false }).addTo(map);
-  map.flyTo(start, 5, {duration:1.2});
-  const dur = 15000; const t0 = performance.now(); let prev = start;
-  (function step(ts){
-    const p = Math.min(1, (ts - t0)/dur); const t = easeInOut(p);
-    const lat = start.lat + (end.lat - start.lat) * t; const lng = start.lng + (end.lng - start.lng) * t;
-    const now = L.latLng(lat,lng); planeMarker.setLatLng(now);
-    const brg = bearing(prev, now); setRotation(planeMarker, brg); prev = now;
-    if(p<1){ requestAnimationFrame(step); }
-    else{
-      currentAirportLatLng = end;
-      setRotation(planeMarker, bearing(now, L.latLng(now.lat, now.lng+0.001)));
-      map.flyTo(end, 6.5, {duration:2});
-      const u=getActiveUser(); const old=u.flights; u.flights += 1; updateUser(u); maybeAwardRank(old,u.flights); updateUserChip();
-      if(regionAfter) setTimeout(()=>driveToRegion(regionAfter), 1200);
-    }
-  })(t0);
+  L.polyline([start,end],{color:trailColor,weight:3,opacity:.5,dashArray:"6 10"}).addTo(pathsLayer);
+  const startTime=performance.now(), dir=bearing(start,end); setEmojiRotation(marker,dir);
+  (function step(now){
+    const t=Math.min((now-startTime)/duration,1), k=easeInOut(t);
+    const lat=start.lat+(end.lat-start.lat)*k, lng=start.lng+(end.lng-start.lng)*k;
+    marker.setLatLng([lat,lng]); setEmojiRotation(marker,dir);
+    if(t<1) requestAnimationFrame(step); else onDone && onDone();
+  })(startTime);
 }
 
-/* 공항 → 지역 택시 */
+function doFly(fromAp, toAp){
+  ensurePlane();
+  map.setView([fromAp.lat,fromAp.lng],4,{animate:true});
+  animateTravel({
+    start:L.latLng(fromAp.lat,fromAp.lng),
+    end:L.latLng(toAp.lat,toAp.lng),
+    marker:planeMarker,
+    duration:15000,
+    trailColor:"#0e6eb8",
+    onDone:()=>{
+      currentAirportLatLng = L.latLng(toAp.lat,toAp.lng);
+      map.flyTo(currentAirportLatLng,7,{duration:1.2});
+      L.circleMarker(currentAirportLatLng,{radius:6,color:'#0e6eb8',fillColor:'#0e6eb8',fillOpacity:.9})
+        .addTo(pathsLayer).bindTooltip(`${toAp.name}`,{direction:'top'});
+    }
+  });
+}
+
 async function driveToRegion(region){
+  region = region?.trim() || document.getElementById('regionInput2').value.trim();
   if(!region){alert('지역을 입력해주세요.');return;}
-  if(!currentAirportLatLng){alert('먼저 나라/공항으로 비행해 착륙해야 해요.');return;}
-  const q = lastCountryName ? `${region} ${lastCountryName}` : region;
-  const dst = await geocode(q);
-  if(!dst){ alert('해당 지역을 찾을 수 없어요. 다른 표기로 시도해보세요.'); return; }
-  const start = L.latLng(currentAirportLatLng.lat, currentAirportLatLng.lng);
-  const end   = L.latLng(dst.lat, dst.lng);
-  L.polyline([start, end], {color:'#ffb703', weight:2, opacity:.9, dashArray:'2 6'}).addTo(pathsLayer);
-  if(carMarker) map.removeLayer(carMarker);
-  carMarker = L.marker(start, { icon: makeTaxiIcon(), interactive:false }).addTo(map);
-  map.flyTo(start, 8, {duration:1.0});
-  const distance = start.distanceTo(end); const dur = Math.min(16000, Math.max(6000, distance/30));
-  const t0 = performance.now(); let prev = start;
-  (function step(ts){
-    const p = Math.min(1, (ts - t0)/dur); const t = easeInOut(p);
-    const lat = start.lat + (end.lat - start.lat) * t; const lng = start.lng + (end.lng - start.lng) * t;
-    const now = L.latLng(lat,lng); carMarker.setLatLng(now);
-    const brg = bearing(prev, now); setRotation(carMarker, brg); prev = now;
-    if(p<1){ requestAnimationFrame(step); }
-    else{
-      map.flyTo(end, 13.5, {duration:1.6});
-      L.circleMarker(end, {radius:6,color:'#ff8800',fillColor:'#ff8800',fillOpacity:.85}).addTo(pathsLayer)
-       .bindTooltip('여기에서 지도를 손가락으로 움직여 주변을 보고,\n맘에 드는 지점을 탭/클릭해서 추억을 저장하세요.', {permanent:false, direction:'top'});
+  if(!currentAirportLatLng){alert('먼저 나라로 비행해 공항에 도착해야 해요.');return;}
+  const r = await geocodeOne(region);
+  if(!r){alert('지역을 찾지 못했어요. 다른 표현으로 검색해보세요.');return;}
+  ensureCar(); carMarker.setLatLng(currentAirportLatLng);
+  animateTravel({
+    start:currentAirportLatLng,
+    end:L.latLng(r.lat,r.lng),
+    marker:carMarker,
+    duration:9000,
+    trailColor:"#26a269",
+    onDone:()=>{
+      currentAirportLatLng = L.latLng(r.lat,r.lng);
+      map.flyTo(currentAirportLatLng,13,{duration:1.0});
+      L.marker(currentAirportLatLng).addTo(pathsLayer).bindPopup(`도착: ${region}`).openPopup();
     }
-  })(t0);
+  });
 }
 
-/* 귀국 */
-function returnHome(){
-  const here = carMarker?.getLatLng() || planeMarker?.getLatLng() || (currentAirportLatLng ? L.latLng(currentAirportLatLng.lat,currentAirportLatLng.lng) : L.latLng(ICN.lat,ICN.lng));
-  const start = here; const end = L.latLng(ICN.lat, ICN.lng);
-  if(planeMarker) map.removeLayer(planeMarker);
-  planeMarker = L.marker(start, { icon: makePlaneIcon(), interactive:false }).addTo(map);
-  pathsLayer.clearLayers();
-  L.polyline([start, end], {color:'#0e6eb8', weight:2, opacity:.6, dashArray:'6 8'}).addTo(pathsLayer);
-  const dur = 15000; const t0 = performance.now(); let prev=start;
-  (function step(ts){
-    const p = Math.min(1, (ts - t0)/dur); const t = easeInOut(p);
-    const lat = start.lat + (end.lat - start.lat) * t; const lng = start.lng + (end.lng - start.lng) * t;
-    const now = L.latLng(lat,lng); planeMarker.setLatLng(now);
-    setRotation(planeMarker, bearing(prev, now)); prev=now;
-    if(p<1){ requestAnimationFrame(step); }
-    else{
-      map.flyTo(end, 7, {duration:1.6});
-      currentAirportLatLng = {lat:end.lat,lng:end.lng};
-      const u=getActiveUser(); const old=u.flights; u.flights += 1; updateUser(u); maybeAwardRank(old,u.flights); updateUserChip();
-      openModal('returnModal');
-    }
-  })(t0);
-}
-document.getElementById('retEnd').onclick = ()=>{
-  closeModal('returnModal'); pathsLayer.clearLayers();
-  if(planeMarker) { map.removeLayer(planeMarker); planeMarker=null; }
-  if(carMarker) { map.removeLayer(carMarker); carMarker=null; }
-  document.getElementById('screen-map').classList.remove('active');
-  document.getElementById('screen-preflight').classList.add('active');
-};
-document.getElementById('retContinue').onclick = ()=>{
-  closeModal('returnModal');
-  document.getElementById('screen-preflight').classList.remove('active');
-  document.getElementById('screen-map').classList.add('active');
-  document.getElementById('countryInput2').focus();
-};
-
-/* 모달 */
-function openModal(id){ document.getElementById(id).style.display='flex'; }
-function closeModal(id){ document.getElementById(id).style.display='none'; }
-
-/* 추억 저장소 */
-const STORE_KEY = 'triplog_memories_v4'; // v4: 장소 자동 라벨 추가
-function loadMemories(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)||'[]'); }catch(e){ return []; } }
-function saveMemories(arr){ localStorage.setItem(STORE_KEY, JSON.stringify(arr)); }
-function nfix(v){ return Math.round(v*1e5)/1e5; } // ~1m 해상도
-function locKey(lat,lng){ return `${nfix(lat)},${nfix(lng)}`; }
-
-function addMemoryMarkerForPlace(key, arr){
-  const [lat,lng] = key.split(',').map(Number);
-  const label = arr[0]?.place || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-  const mk = L.marker([lat,lng]).addTo(memoryLayer);
-  mk.bindTooltip(label, {permanent:false, direction:'top'});
-  mk.on('click', ()=> openGalleryAt(key));
-}
-
+/* ========== 추억 저장(LocalStorage) ========== */
+function loadMemories(){ try{ return JSON.parse(localStorage.getItem('triplog_memories')||'[]'); }catch(e){ return []; } }
 function renderMemories(){
-  memoryLayer.clearLayers();
-  const list = loadMemories();
-  const byPlace = {};
-  list.forEach(m=>{
-    const key = locKey(m.lat, m.lng);
-    if(!byPlace[key]) byPlace[key]=[];
-    byPlace[key].push(m);
-  });
-
-  Object.entries(byPlace).forEach(([key,arr])=> addMemoryMarkerForPlace(key, arr));
-
-  const wrap = document.getElementById('memWrap'); wrap.innerHTML='';
-  const sorted = [...list].reverse();
-  sorted.forEach((m)=>{
-    const row = document.createElement('div');
-    row.className='mem';
-    row.innerHTML = `<span>📍</span>
-      <div>
-        <div style="font-weight:600">${m.place || m.title || '무제'}</div>
-        <div style="font-size:12px;opacity:.7">${m.time} · ${m.author||'익명'}</div>
-      </div>`;
-    row.onclick = ()=>{ openGalleryAt(locKey(m.lat,m.lng)); };
-    wrap.appendChild(row);
-  });
+  const list = loadMemories(); const wrap = document.getElementById('memWrap');
+  wrap.innerHTML=''; memoryLayer.clearLayers();
+  list.forEach(m=>{ addMemoryToUI(m); addMemoryMarker(m); });
 }
-
+function addMemoryToUI(m){
+  const wrap=document.getElementById('memWrap'), div=document.createElement('div'); div.className='mem';
+  div.innerHTML = `
+    <div style="width:44px;height:44px;border-radius:8px;background:#e9f5ff;display:grid;place-items:center;">📍</div>
+    <div style="flex:1;">
+      <div style="font-weight:700;font-size:13px;">${m.title||'제목 없음'}</div>
+      <div style="font-size:12px;opacity:.75;">${m.text?m.text.slice(0,40):'메모 없음'}</div>
+    </div>`;
+  div.onclick = ()=>{
+    const pos=L.latLng(m.lat,m.lng);
+    map.flyTo(pos,14,{duration:.8});
+    L.marker(pos).addTo(pathsLayer).bindPopup(`<strong>${m.title||'제목 없음'}</strong><br>${m.text||''}${m.img?`<br><img src="${m.img}" style="width:180px;border-radius:8px;margin-top:6px;">`:''}`).openPopup();
+  };
+  wrap.prepend(div);
+}
+function addMemoryMarker(m){
+  const mk=L.marker([m.lat,m.lng]).addTo(memoryLayer);
+  mk.bindPopup(`<strong>${m.title||'제목 없음'}</strong><br>${m.text||''}${m.img?`<br><img src="${m.img}" style="width:180px;border-radius:8px;margin-top:6px;">`:''}`);
+}
 async function saveMemory(){
-  if(!clickLatLng){ closeModal('memoryModal'); return;}
-  const place = document.getElementById('placeName').value.trim();
-  const title = document.getElementById('memoryTitle').value.trim();
-  const text  = document.getElementById('memoryText').value.trim();
-  const file  = document.getElementById('memoryImage').files[0];
-  let img64 = '';
-  if(file){ img64 = await new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=rej; fr.readAsDataURL(file); }); }
-
-  const author = window.TRIPLOG_USER || '익명';
-  const m = { lat:nfix(clickLatLng.lat), lng:nfix(clickLatLng.lng), place, title, text, img:img64, time:nowKR(), author };
-  const list = loadMemories(); list.push(m); saveMemories(list);
-
-  const u=getActiveUser(); u.photos += 1; updateUser(u); updatePhotoChampion(); updateUserChip();
-
-  document.getElementById('placeName').value='';
+  const title=document.getElementById('memoryTitle').value.trim();
+  const text=document.getElementById('memoryText').value.trim();
+  const file=document.getElementById('memoryImage').files[0];
+  let img=""; if(file){ img=await fileToDataURL(file); }
+  const mem={id:'mem_'+Date.now(),lat:clickLatLng.lat,lng:clickLatLng.lng,title,text,img,createdAt:new Date().toISOString()};
+  const all=loadMemories(); all.push(mem); localStorage.setItem('triplog_memories',JSON.stringify(all));
+  addMemoryToUI(mem); addMemoryMarker(mem); closeModal('memoryModal');
   document.getElementById('memoryTitle').value=''; document.getElementById('memoryText').value=''; document.getElementById('memoryImage').value='';
-  closeModal('memoryModal'); renderMemories();
 }
 
-/* 갤러리(슬라이드) — 버튼 + 스와이프 */
-let galList=[], galIndex=0, galKey='';
-const galStage = ()=>document.getElementById('galStage');
-function openGalleryAt(key){
-  const [lat,lng] = key.split(',').map(Number);
-  const list = loadMemories().filter(m=> locKey(m.lat,m.lng)===key);
-  if(list.length===0) return;
-  galList = list; galIndex = 0; galKey = key;
-
-  const stage = galStage(); stage.innerHTML = '';
-  list.forEach(m=>{
-    const div = document.createElement('div');
-    div.className='galleryItem';
-    if(m.img){
-      const img = document.createElement('img'); img.src=m.img; img.alt=m.title||m.place||'사진';
-      div.appendChild(img);
-    }else{
-      const ph = document.createElement('div');
-      ph.style.color='#fff'; ph.style.padding='28px'; ph.textContent='(사진 없음)';
-      div.appendChild(ph);
-    }
-    stage.appendChild(div);
-  });
-
-  const placeLabel = list[0]?.place || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-  document.getElementById('galPlace').textContent = `${placeLabel} · 총 ${list.length}개`;
-  applyGalleryIndex(true);
-  setupSwipe(document.getElementById('galWrap'));
-  openModal('galleryModal');
-}
-function applyGalleryIndex(immediate=false){
-  const stage = galStage();
-  const x = -galIndex*100;
-  if(immediate) stage.style.transition='none'; else stage.style.transition='transform .35s ease';
-  stage.style.transform = `translateX(${x}%)`;
-
-  const m = galList[galIndex];
-  const titlePart = m?.title ? `${m.title} · ` : '';
-  document.getElementById('galCaption').textContent = m?.text || '';
-  document.getElementById('galBy').textContent = `${titlePart}${m?.author||'익명'} · ${m?.time||''}`;
-}
-function galleryStep(dir){ if(!galList.length) return; galIndex = (galIndex + dir + galList.length) % galList.length; applyGalleryIndex(); }
-function setupSwipe(el){
-  let sx=0, sy=0, dx=0, dy=0, touching=false;
-  el.ontouchstart = (e)=>{ const t=e.touches[0]; sx=t.clientX; sy=t.clientY; dx=0; dy=0; touching=true; };
-  el.ontouchmove = (e)=>{ if(!touching) return; const t=e.touches[0]; dx=t.clientX-sx; dy=t.clientY-sy; };
-  el.ontouchend = ()=>{ touching=false; if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)){ if(dx<0) galleryStep(+1); else galleryStep(-1); } };
-}
-
-/* 보조 */
-function invalidateSoon(){ setTimeout(()=>map && map.invalidateSize(), 300); }
-document.getElementById('btnFly').addEventListener('click', ()=> invalidateSoon());
-document.getElementById('btnDrive').addEventListener('click', ()=> invalidateSoon());
-(function fillCountriesOnce(){ const dl=document.getElementById('countryList'); if(dl.childElementCount) return; Object.keys(airports).forEach(n=>{const o=document.createElement('option');o.value=n;dl.appendChild(o);}); })();
+/* 초기 값 표시 */
+document.getElementById('bp-from').textContent = `ICN · 인천국제공항`;
 </script>
 </body>
 </html>
